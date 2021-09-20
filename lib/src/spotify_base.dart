@@ -139,7 +139,7 @@ abstract class SpotifyApiBase {
   }
 
   Future<String> _get(String path) {
-    final Map<String, String> headers = const {};
+    final Map<String, String> headers = {};
     if (_acceptLang.isNotEmpty) {
       headers['Accept-Language'] =
           _acceptLang.entries.map((e) => '${e.key};1=${e.value}').join(', ');
