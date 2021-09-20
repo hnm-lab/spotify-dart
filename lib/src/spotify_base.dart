@@ -35,6 +35,13 @@ abstract class SpotifyApiBase {
   Shows get shows => _shows;
   FutureOr<oauth2.Client> get client => _client;
 
+  final Map<String, double> _acceptLang = <String, double>{};
+  void setAcceptLanguage(String lang, double quality) {
+    final double q = min(max(quality, 0), 1);
+
+    _acceptLang[lang] = q;
+  }
+
   SpotifyApiBase.fromClient(FutureOr<http.BaseClient> client) {
     _client = client as FutureOr<oauth2.Client>;
 
@@ -132,7 +139,12 @@ abstract class SpotifyApiBase {
   }
 
   Future<String> _get(String path) {
-    return _getImpl('${_baseUrl}/$path', const {});
+    final Map<String, String> headers = const {};
+    if (_acceptLang.isNotEmpty) {
+      headers['Accept-Language'] =
+          _acceptLang.entries.map((e) => '${e.key};1=${e.value}').join(', ');
+    }
+    return _getImpl('${_baseUrl}/$path', headers);
   }
 
   Future<String> _post(String path, [String body = '']) {
