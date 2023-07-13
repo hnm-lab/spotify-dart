@@ -3,13 +3,14 @@
 
 part of spotify.models;
 
+/// Json representation of an episode
 @JsonSerializable(createToJson: false)
 class Episode extends Object {
   Episode();
 
   /// The episode length in milliseconds.
   /// A URL to a 30 second preview (MP3 format) of the episode.
-  /// [null] if not available.
+  /// `null` if not available.
   @JsonKey(name: 'audio_preview_url')
   String? audioPreviewUrl;
 
@@ -21,7 +22,7 @@ class Episode extends Object {
   int? durationMs;
 
   /// Whether or not the episode has explicit content
-  /// (true = yes it does; false = no it does not OR unknown).
+  /// (`true` = yes it does; `false` = no it does not OR unknown).
   bool? explicit;
 
   /// Known external URLs for this episode.
@@ -74,4 +75,16 @@ class Episode extends Object {
 
   factory Episode.fromJson(Map<String, dynamic> json) =>
       _$EpisodeFromJson(json);
+}
+
+/// Json representation of an episode with information about its show
+@JsonSerializable(createToJson: false)
+class EpisodeFull extends Episode {
+
+  EpisodeFull();
+
+  Show? show;
+
+  factory EpisodeFull.fromJson(Map<String, dynamic> json) =>
+      _$EpisodeFullFromJson(json);
 }

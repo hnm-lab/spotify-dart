@@ -3,6 +3,15 @@
 
 part of spotify;
 
+/// Accesspoint for the spotify api
+///
+/// Example usage:
+/// ```dart
+///   var credentials = SpotifyApiCredentials('my_id', 'my_secret');
+///   var spotify = SpotifyApi(credentials);
+///   var shows = spotify.shows.get('id);
+///   ...
+/// ```
 class SpotifyApi extends SpotifyApiBase {
   SpotifyApi(SpotifyApiCredentials credentials,
       {Function(SpotifyApiCredentials)? onCredentialsRefreshed})
@@ -17,6 +26,17 @@ class SpotifyApi extends SpotifyApiBase {
 
   SpotifyApi.withAccessToken(String accessToken)
       : super._withAccessToken(accessToken);
+
+  static Future<SpotifyApi> asyncFromCredentials(
+    SpotifyApiCredentials credentials, {
+    Function(SpotifyApiCredentials)? onCredentialsRefreshed,
+  }) {
+    return SpotifyApiBase._asyncFromCredentials(
+      credentials,
+      http.Client(),
+      onCredentialsRefreshed,
+    );
+  }
 
   static oauth2.AuthorizationCodeGrant authorizationCodeGrant(
       SpotifyApiCredentials credentials,

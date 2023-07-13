@@ -3,6 +3,7 @@
 
 part of spotify;
 
+/// Holds information about credentials to access the api.
 class SpotifyApiCredentials {
   /// The client identifier for this Spotify client.
   ///
@@ -31,7 +32,8 @@ class SpotifyApiCredentials {
 
   /// The specific permissions being requested from Spotify.
   ///
-  /// See https://developer.spotify.com/documentation/general/guides/scopes/
+  /// Use [AuthorizationScope] or
+  /// see https://developer.spotify.com/documentation/web-api/concepts/scopes
   /// for a full list of available scopes.
   List<String>? scopes;
 
@@ -57,13 +59,11 @@ class SpotifyApiCredentials {
     clientId = client.identifier;
     clientSecret = client.secret;
 
-    if (client.credentials != null) {
-      accessToken = client.credentials.accessToken;
-      refreshToken = client.credentials.refreshToken;
-      tokenEndpoint = client.credentials.tokenEndpoint;
-      scopes = client.credentials.scopes;
-      expiration = client.credentials.expiration;
-    }
+    accessToken = client.credentials.accessToken;
+    refreshToken = client.credentials.refreshToken;
+    tokenEndpoint = client.credentials.tokenEndpoint;
+    scopes = client.credentials.scopes;
+    expiration = client.credentials.expiration;
   }
 
   /// Whether or not these credentials have expired.

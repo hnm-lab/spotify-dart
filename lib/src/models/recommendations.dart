@@ -1,5 +1,6 @@
 part of spotify.models;
 
+/// Json representation of the recommendations
 @JsonSerializable(createToJson: false)
 class Recommendations extends Object {
   Recommendations();
@@ -7,7 +8,7 @@ class Recommendations extends Object {
   factory Recommendations.fromJson(Map<String, dynamic> json) =>
       _$RecommendationsFromJson(json);
 
-  /// A List of [RecommendationSeed] objects.
+  /// A List of [RecommendationsSeed] objects.
   List<RecommendationsSeed>? seeds;
 
   /// A List of [TrackSimple] objects ordered according to the parameters
@@ -15,6 +16,7 @@ class Recommendations extends Object {
   List<TrackSimple>? tracks;
 }
 
+/// Json representation of the recommendation seed
 @JsonSerializable(createToJson: false)
 class RecommendationsSeed extends Object {
   RecommendationsSeed();

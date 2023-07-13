@@ -1,8 +1,10 @@
 part of spotify;
 
-class Categories extends EndpointPaging {
+/// Endpoint of browsing the categories `v1/browse/categories`
+class Categories extends Browse {
+  
   @override
-  String get _path => 'v1/browse/categories';
+  String get _path => '${super._path}/categories';
 
   Categories(SpotifyApiBase api) : super(api);
 

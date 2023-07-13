@@ -5,6 +5,7 @@ import 'package:spotify/spotify.dart';
 import 'package:http/http.dart' as http;
 import 'package:oauth2/oauth2.dart' as oauth2;
 
+/// Mock class for making requests
 class SpotifyApiMock extends SpotifyApiBase {
   SpotifyApiMock(SpotifyApiCredentials credentials)
       : super.fromClient(MockClient(credentials));
@@ -37,15 +38,15 @@ class MockClient implements oauth2.Client {
     }
   }
 
-  String _readPath(String url) {
-    var regexString = url.contains('api.spotify.com')
-        ? r'api.spotify.com\/([A-Za-z0-9/]+)\??'
-        : r'api/([A-Za-z0-9/]+)\??';
+  String _readPath(Uri url) {
+    var regexString = url.host.contains('api.spotify.com')
+        ? r'api.spotify.com\/([A-Za-z0-9/\-]+)\??'
+        : r'api/([A-Za-z0-9/\-]+)\??';
 
     var regex = RegExp(regexString);
-    var partialPath = regex.firstMatch(url)!.group(1);
+    var urlString = url.toString();
+    var partialPath = regex.firstMatch(urlString)!.group(1);
     var file = File('test/data/$partialPath.json');
-
     return file.readAsStringSync();
   }
 
@@ -66,7 +67,7 @@ class MockClient implements oauth2.Client {
     if (err != null) {
       return createErrorResponse(err);
     }
-    return createSuccessResponse(_readPath(url.toString()));
+    return createSuccessResponse(_readPath(url));
   }
 
   @override
@@ -87,7 +88,7 @@ class MockClient implements oauth2.Client {
     if (err != null) {
       return createErrorResponse(err);
     }
-    return createSuccessResponse(_readPath(url.toString()));
+    return createSuccessResponse(_readPath(url));
   }
 
   @override
@@ -128,15 +129,17 @@ class MockClient implements oauth2.Client {
   http.Response createSuccessResponse(String body) {
     /// necessary due to using Latin-1 encoding per default.
     /// https://stackoverflow.com/questions/52990816/dart-json-encodedata-can-not-accept-other-language
-    return http.Response(body, 200,
-        headers: {'Content-Type': 'application/json; charset=utf-8'});
+    return http.Response(body, 200, headers: {
+      HttpHeaders.contentTypeHeader: 'application/json; charset=utf-8'
+    });
   }
 
   http.Response createErrorResponse(MockHttpError error) {
     return http.Response(_wrapMessageToJson(error.statusCode!, error.message!),
         error.statusCode!,
-        headers: {'Content-Type': 'application/json; charset=utf-8'}
-          ..addAll(error.headers ?? {}));
+        headers: {
+          HttpHeaders.contentTypeHeader: 'application/json; charset=utf-8'
+        }..addAll(error.headers ?? {}));
   }
 
   String _wrapMessageToJson(int statusCode, String message) =>

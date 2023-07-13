@@ -15,7 +15,7 @@ class RecommendationsEndpoint extends EndpointBase {
       Iterable<String>? seedGenres,
       Iterable<String>? seedTracks,
       int limit = 20,
-      String? market,
+      Market? market,
       Map<String, num>? max,
       Map<String, num>? min,
       Map<String, num>? target}) async {
@@ -33,8 +33,8 @@ class RecommendationsEndpoint extends EndpointBase {
       'seed_genres': seedGenres,
       'seed_tracks': seedTracks
     }.forEach((key, list) => _addList(parameters, key, list!));
-    if (market != null) parameters['market'] = market;
-    [min, max, target].forEach((map) => _addTunableTrackMap(parameters, map!));
+    if (market != null) parameters['market'] = market.name;
+    [min, max, target].forEach((map) => _addTunableTrackMap(parameters, map));
     final pathQuery = Uri(path: _path, queryParameters: parameters)
         .toString()
         .replaceAll(RegExp(r'%2C'), ',');
@@ -46,7 +46,7 @@ class RecommendationsEndpoint extends EndpointBase {
   /// and [tunableTrackMap] a map of tunable Track Attributes.
   /// adds the attributes to [parameters]
   void _addTunableTrackMap(
-      Map<String, String> parameters, Map<String, num> tunableTrackMap) {
+      Map<String, String> parameters, Map<String, num>? tunableTrackMap) {
     if (tunableTrackMap != null) {
       parameters.addAll(tunableTrackMap.map<String, String>((k, v) =>
           MapEntry(k, v is int ? v.toString() : v.toStringAsFixed(2))));

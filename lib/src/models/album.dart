@@ -3,6 +3,7 @@
 
 part of spotify.models;
 
+/// Json representation of an album
 @JsonSerializable(createToJson: false)
 class Album extends AlbumSimple {
   Album();
@@ -40,7 +41,7 @@ class AlbumSimple extends Object {
       _$AlbumSimpleFromJson(json);
 
   /// Helper function that unwraps the items from the paging object.
-  static Iterable<TrackSimple> _extractTracksFromPage(dynamic? json) {
+  static Iterable<TrackSimple> _extractTracksFromPage(dynamic json) {
     if (json == null) {
       return [];
     }
@@ -51,9 +52,13 @@ class AlbumSimple extends Object {
         : items.map((trackJson) => TrackSimple.fromJson(trackJson));
   }
 
+  static AlbumType? _convertForAlbumType(String? json) {
+    return AlbumType.values.asNameMap()[json?.toLowerCase()];
+  }
+
   /// The type of the album: one of "album", "single", or "compilation".
-  @JsonKey(name: 'album_type')
-  String? albumType;
+  @JsonKey(name: 'album_type', fromJson: _convertForAlbumType)
+  AlbumType? albumType;
 
   /// The artists of the album. Each artist object includes a link in href to
   /// more detailed information about the artist.
@@ -104,3 +109,5 @@ class AlbumSimple extends Object {
 }
 
 enum DatePrecision { day, month, year }
+
+enum AlbumType { album, single, compilation }

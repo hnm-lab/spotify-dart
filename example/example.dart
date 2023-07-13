@@ -13,15 +13,18 @@ void main() async {
   var spotify = SpotifyApi(credentials);
 
   print('\nPodcast:');
-  var podcast = await spotify.shows.get('4AlxqGkkrqe0mfIx3Mi7Xt');
-  print(podcast.name);
+  await spotify.shows
+      .get('4rOoJ6Egrf8K2IrywzwOMk')
+      .then((podcast) => print(podcast.name))
+      .onError(
+          (error, stackTrace) => print((error as SpotifyException).message));
 
   print('\nPodcast episode:');
-  var episodes = await spotify.shows.episodes('4AlxqGkkrqe0mfIx3Mi7Xt');
-  var firstEpisode = (await episodes.first()).items!.first;
-  print(firstEpisode.name);
+  var episodes = spotify.shows.episodes('4AlxqGkkrqe0mfIx3Mi7Xt');
+  await episodes.first().then((first) => print(first.items!.first)).onError(
+      (error, stackTrace) => print((error as SpotifyException).message));
 
-  print('Artists:');
+  print('\nArtists:');
   var artists = await spotify.artists.list(['0OdUWJ0sBjDrqHygGUXeCF']);
   artists.forEach((x) => print(x.name));
 
@@ -35,21 +38,30 @@ void main() async {
     print(track.name);
   });
 
+  print('\nNew Releases');
+  var newReleases = await spotify.browse.getNewReleases().first();
+  newReleases.items!.forEach((album) => print(album.name));
+
   print('\nFeatured Playlist:');
   var featuredPlaylists = await spotify.playlists.featured.all();
   featuredPlaylists.forEach((playlist) {
     print(playlist.name);
   });
 
+  print('\nUser\'s playlists:');
+  var usersPlaylists =
+      await spotify.playlists.getUsersPlaylists('superinteressante').all();
+  usersPlaylists.forEach((playlist) {
+    print(playlist.name);
+  });
+
   print("\nSearching for \'Metallica\':");
-  var search = await spotify.search
-      .get('metallica')
-      .first(2)
-      .catchError((err) => print((err as SpotifyException).message));
-  if (search == null) {
-    return;
-  }
+  var search = await spotify.search.get('metallica').first(2);
+
   search.forEach((pages) {
+    if (pages.items == null) {
+      print('Empty items');
+    }
     pages.items!.forEach((item) {
       if (item is PlaylistSimple) {
         print('Playlist: \n'
@@ -73,9 +85,10 @@ void main() async {
             'href: ${item.href}\n'
             'type: ${item.type}\n'
             'uri: ${item.uri}\n'
+            'popularity: ${item.popularity}\n'
             '-------------------------------');
       }
-      if (item is TrackSimple) {
+      if (item is Track) {
         print('Track:\n'
             'id: ${item.id}\n'
             'name: ${item.name}\n'
@@ -88,6 +101,7 @@ void main() async {
             'discNumber: ${item.discNumber}\n'
             'trackNumber: ${item.trackNumber}\n'
             'explicit: ${item.explicit}\n'
+            'popularity: ${item.popularity}\n'
             '-------------------------------');
       }
       if (item is AlbumSimple) {

@@ -3,6 +3,7 @@
 
 part of spotify.models;
 
+/// Json representation of a playlist
 @JsonSerializable(createToJson: false)
 class Playlist extends Object implements PlaylistSimple {
   Playlist();
@@ -15,7 +16,7 @@ class Playlist extends Object implements PlaylistSimple {
   bool? collaborative;
 
   /// The playlist description. Only returned for modified, verified playlists,
-  /// otherwise [null].
+  /// otherwise `null`.
   @override
   String? description;
 
@@ -52,8 +53,8 @@ class Playlist extends Object implements PlaylistSimple {
   @override
   User? owner;
 
-  /// The playlist's public/private status: [true] the playlist is public,
-  /// [false] the playlist is private, null the playlist status is not relevant.
+  /// The playlist's public/private status: `true` the playlist is public,
+  /// `false` the playlist is private, null the playlist status is not relevant.
   /// For more about public/private status, see Working with Playlists.
   @override
   bool? public;
@@ -66,7 +67,7 @@ class Playlist extends Object implements PlaylistSimple {
 
   /// Use [Playlist.tracks]
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   TracksLink? tracksLink;
 
   /// Information about the tracks of the playlist.
@@ -81,6 +82,7 @@ class Playlist extends Object implements PlaylistSimple {
   String? uri;
 }
 
+/// Json representation of a simplified playlist
 @JsonSerializable(createToJson: false)
 class PlaylistSimple extends Object {
   PlaylistSimple();
@@ -92,7 +94,7 @@ class PlaylistSimple extends Object {
   bool? collaborative;
 
   /// The playlist description. Only returned for modified, verified playlists,
-  /// otherwise [null].
+  /// otherwise `null`.
   String? description;
 
   /// Known external URLs for this playlist.
@@ -119,8 +121,8 @@ class PlaylistSimple extends Object {
   /// The user who owns the playlist
   User? owner;
 
-  /// The playlist's public/private status: [true] the playlist is public,
-  /// [false] the playlist is private, null the playlist status is not relevant.
+  /// The playlist's public/private status: `true` the playlist is public,
+  /// `false` the playlist is private, null the playlist status is not relevant.
   /// For more about public/private status, see Working with Playlists.
   bool? public;
 
@@ -142,6 +144,7 @@ class PlaylistSimple extends Object {
   String? uri;
 }
 
+/// Json representation of a featured playlist. Used as a wrapper object.
 @JsonSerializable(createToJson: false)
 class PlaylistsFeatured extends Object {
   PlaylistsFeatured();
@@ -153,6 +156,7 @@ class PlaylistsFeatured extends Object {
   String? message;
 }
 
+/// Json representation of a playlist with a single track
 @JsonSerializable(createToJson: false)
 class PlaylistTrack extends Object {
   PlaylistTrack();
@@ -161,12 +165,12 @@ class PlaylistTrack extends Object {
       _$PlaylistTrackFromJson(json);
 
   /// The date and time the track was added.
-  /// Note that some very old playlists may return [null] in this field.
+  /// Note that some very old playlists may return `null` in this field.
   @JsonKey(name: 'added_at')
   DateTime? addedAt;
 
   /// The Spotify user who added the track.
-  /// Note that some very old playlists may return [null] in this field.
+  /// Note that some very old playlists may return `null` in this field.
   @JsonKey(name: 'added_by')
   UserPublic? addedBy;
 
