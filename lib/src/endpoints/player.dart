@@ -1,14 +1,16 @@
 // Copyright (c) 2022, 2023, chances, rinukkusu, hayribakici. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-part of spotify;
+// ignore_for_file: deprecated_member_use_from_same_package
+
+part of '../../spotify.dart';
 
 /// Endpoint of the player
 class PlayerEndpoint extends _MeEndpointBase {
   @override
   String get _path => '${super._path}/player';
 
-  PlayerEndpoint(SpotifyApiBase api) : super(api);
+  PlayerEndpoint(super.api);
 
   /// Toggle Shuffle For User's Playback.
   ///
@@ -18,24 +20,32 @@ class PlayerEndpoint extends _MeEndpointBase {
   /// will be retrieved after setting the volume. Defaults to true.
   Future<PlaybackState?> shuffle(bool state,
       {String? deviceId, bool retrievePlaybackState = true}) async {
-    await _api._put('$_path/shuffle?' +
-        _buildQuery({'state': state, 'deviceId': deviceId}));
+    await _api._put('$_path/shuffle?${_buildQuery({
+          'state': state,
+          'deviceId': deviceId
+        })}');
 
     return retrievePlaybackState ? playbackState() : null;
   }
 
   /// Returns the current playback state, including progress, track
-  /// and active device.
+  /// and active device. Returns an empty [PlaybackState] object when
+  /// no playback context has been started.
   @Deprecated('Use [playbackState] instead')
   Future<PlaybackState> player([String? market]) async {
     return playbackState(Market.values.asNameMap()[market]);
   }
 
   /// Returns the current playback state, including progress, track
-  /// and active device.
+  /// and active device. Returns an empty [PlaybackState] object when
+  /// no playback context has been started.
   Future<PlaybackState> playbackState([Market? market]) async {
-    var jsonString = await _api
-        ._get('$_path?' + _buildQuery({'market': market?.name}));
+    var jsonString =
+        await _api._get('$_path?${_buildQuery({'market': market?.name})}');
+
+    if (jsonString.isEmpty) {
+      return PlaybackState();
+    }
     final map = json.decode(jsonString);
     return PlaybackState.fromJson(map);
   }
@@ -87,18 +97,78 @@ class PlayerEndpoint extends _MeEndpointBase {
   /// from the context's current track.
   /// [retrievePlaybackState] is optional. If true, the current playback state
   /// will be retrieved. Defaults to true.
+  @Deprecated(
+      "Use `startWithTracks()` or `startWithContext()` to start a new context and resume() instead")
   Future<PlaybackState?> startOrResume(
       {String? deviceId,
       StartOrResumeOptions? options,
       bool retrievePlaybackState = true}) async {
-    var body = options?.toJson();
-    var json = jsonEncode(body ?? '');
+    final body = options?.toJson();
+    final json = body != null ? jsonEncode(body) : null;
 
     await _api._put(
-        '$_path/play?' + _buildQuery({'device_id': deviceId}), json);
+      '$_path/play?${_buildQuery({'device_id': deviceId})}',
+      json,
+    );
 
     return retrievePlaybackState ? playbackState() : null;
   }
+
+  /// Start a new playback context with given [trackUris] and with given optional
+  /// [deviceId]. If not provided, the user's currently active device
+  /// is the target. Playback can also start at [positionMs], which is set to `0`
+  /// by default.
+  /// [retrievePlaybackState] is optional. If `true`, the current [PlaybackState]
+  /// will be retrieved. Default's to `true`.
+  ///
+  /// Note: Before starting a new playback context check the [playbackState]
+  /// if necessary before [resume]ing, otherwise you overwrite the current
+  /// context.
+  Future<PlaybackState?> startWithTracks(List<String> trackUris,
+      {String? deviceId,
+      int positionMs = 0,
+      bool retrievePlaybackState = true}) async {
+    assert(trackUris.isNotEmpty, 'Cannot start playback with empty track uris');
+    assert(positionMs >= 0, 'Position must be greater than or equal to 0');
+
+    var options = StartWithUrisOptions(uris: trackUris, positionMs: positionMs);
+    return startOrResume(
+        deviceId: deviceId,
+        options: options,
+        retrievePlaybackState: retrievePlaybackState);
+  }
+
+  /// Start a new playback context (album, playlist) with given a [contextUri].
+  /// and given optional [deviceId]. If not provided, the user's currently active
+  /// device is the target. Set [Offset] to start playback at a specific point.
+  /// [retrievePlaybackState] is optional. If `true`, the current [PlaybackState]
+  /// will be retrieved. Default's to `true`.
+  ///
+  /// Note: Before starting a new playback context check the [playbackState]
+  /// if necessary before [resume]ing, otherwise you overwrite the current
+  /// context.
+  Future<PlaybackState?> startWithContext(String contextUri,
+      {String? deviceId,
+      Offset? offset,
+      bool retrievePlaybackState = true}) async {
+    assert(
+        contextUri.isNotEmpty, 'Cannot start playback with empty context uri');
+    var options =
+        StartWithContextOptions(contextUri: contextUri, offset: offset);
+    return startOrResume(
+        deviceId: deviceId,
+        options: options,
+        retrievePlaybackState: retrievePlaybackState);
+  }
+
+  /// Resume current playback on the user's active device if not specifically
+  /// set with [deviceId].
+  /// [retrievePlaybackState] is optional. If `true`, the current [PlaybackState]
+  /// will be retrieved. Default's to `true`.
+  Future<PlaybackState?> resume(
+          {String? deviceId, bool retrievePlaybackState = true}) async =>
+      startOrResume(
+          deviceId: deviceId, retrievePlaybackState: retrievePlaybackState);
 
   /// Pause playback on the user's account.
   /// [deviceId] is optional. If not provided, the user's currently active device
@@ -107,7 +177,7 @@ class PlayerEndpoint extends _MeEndpointBase {
   /// will be retrieved. Defaults to true.
   Future<PlaybackState?> pause(
       {String? deviceId, bool retrievePlaybackState = true}) async {
-    await _api._put('$_path/pause?' + _buildQuery({'device_id': deviceId}));
+    await _api._put('$_path/pause?${_buildQuery({'device_id': deviceId})}');
 
     return retrievePlaybackState ? playbackState() : null;
   }
@@ -119,7 +189,7 @@ class PlayerEndpoint extends _MeEndpointBase {
   /// will be retrieved. Defaults to true.
   Future<PlaybackState?> previous(
       {String? deviceId, bool retrievePlaybackState = true}) async {
-    await _api._post('$_path/previous?' + _buildQuery({'device_id': deviceId}));
+    await _api._post('$_path/previous?${_buildQuery({'device_id': deviceId})}');
 
     return retrievePlaybackState ? playbackState() : null;
   }
@@ -131,7 +201,7 @@ class PlayerEndpoint extends _MeEndpointBase {
   /// will be retrieved. Defaults to true.
   Future<PlaybackState?> next(
       {String? deviceId, bool retrievePlaybackState = true}) async {
-    await _api._post('$_path/next?' + _buildQuery({'device_id': deviceId}));
+    await _api._post('$_path/next?${_buildQuery({'device_id': deviceId})}');
 
     return retrievePlaybackState ? playbackState() : null;
   }
@@ -145,8 +215,10 @@ class PlayerEndpoint extends _MeEndpointBase {
   Future<PlaybackState?> seek(int positionMs,
       {String? deviceId, bool retrievePlaybackState = true}) async {
     assert(positionMs >= 0, 'positionMs must be greater or equal to 0');
-    await _api._put('$_path/seek?' +
-        _buildQuery({'position_ms': positionMs, 'device_id': deviceId}));
+    await _api._put('$_path/seek?${_buildQuery({
+          'position_ms': positionMs,
+          'device_id': deviceId
+        })}');
 
     return retrievePlaybackState ? playbackState() : null;
   }
@@ -160,11 +232,10 @@ class PlayerEndpoint extends _MeEndpointBase {
   /// will be retrieved. Defaults to true.
   Future<PlaybackState?> repeat(RepeatState state,
       {String? deviceId, bool retrievePlaybackState = true}) async {
-    await _api._put('$_path/repeat?' +
-        _buildQuery({
+    await _api._put('$_path/repeat?${_buildQuery({
           'state': state.toString().split('.').last,
           'device_id': deviceId
-        }));
+        })}');
 
     return retrievePlaybackState ? playbackState() : null;
   }
@@ -180,13 +251,15 @@ class PlayerEndpoint extends _MeEndpointBase {
       {String? deviceId, bool retrievePlaybackState = true}) async {
     assert(volumePercent >= 0 && volumePercent <= 100,
         'Volume must be between 0 and 100');
-    await _api._put('$_path/volume?' +
-        _buildQuery({'volume_percent': volumePercent, 'device_id': deviceId}));
+    await _api._put('$_path/volume?${_buildQuery({
+          'volume_percent': volumePercent,
+          'device_id': deviceId
+        })}');
 
     return retrievePlaybackState ? playbackState() : null;
   }
 
-  /// Transfer playback to a new device and determine if 
+  /// Transfer playback to a new device and determine if
   /// it should start [play]ing. Default is `true`.
   ///
   /// The `AuthorizationScope.connect.modifyPlaybackState` needs to be set.

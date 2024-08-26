@@ -1,24 +1,28 @@
 // Copyright (c) 2018, chances. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-part of spotify.models;
+part of '_models.dart';
 
 /// Json representation of the playback state
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class PlaybackState extends Object {
   PlaybackState();
 
   factory PlaybackState.fromJson(Map<String, dynamic> json) =>
       _$PlaybackStateFromJson(json);
 
+  Map<String, dynamic> toJson() => _$PlaybackStateToJson(this);
+
   /// Unix Millisecond Timestamp when data was fetched
+  @JsonKey(fromJson: convertToIntIfDoubleValue)
   int? timestamp;
 
   /// A [PlayerContext] Object. Can be `null`.
   PlayerContext? context;
 
   /// Progress into the currently playing track. Can be `null`.
-  int? progress_ms;
+  @JsonKey(name: 'progress_ms', fromJson: convertToIntIfDoubleValue)
+  int? progressMs;
 
   /// The currently playing track. Can be `null`.
   Track? item;
@@ -40,22 +44,25 @@ class PlaybackState extends Object {
   @JsonKey(name: 'shuffle_state', defaultValue: false)
   bool? isShuffling;
 
-  /// The repeat state. Can be [RepeatState.off], [RepeatState.track] or 
+  /// The repeat state. Can be [RepeatState.off], [RepeatState.track] or
   /// [RepeatState.context]
   @JsonKey(name: 'repeat_state', defaultValue: RepeatState.off)
   RepeatState? repeatState;
 }
 
 /// Json representation of the context of the playback state
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class PlayerContext extends Object {
   PlayerContext();
 
   factory PlayerContext.fromJson(Map<String, dynamic> json) =>
       _$PlayerContextFromJson(json);
 
+  Map<String, dynamic> toJson() => _$PlayerContextToJson(this);
+
   /// The external_urls of the context, or `null` if not available.
-  ExternalUrls? external_urls;
+  @JsonKey(name: 'external_urls')
+  ExternalUrls? externalUrls;
 
   /// The href of the context, or `null` if not available.
   String? href;
@@ -67,12 +74,14 @@ class PlayerContext extends Object {
   String? uri;
 }
 
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class Actions extends Object {
   Actions();
 
   factory Actions.fromJson(Map<String, dynamic> json) =>
       _$ActionsFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ActionsToJson(this);
 
   /// Interrupting playback. Optional field.
   @JsonKey(name: 'interrupting_playback', defaultValue: false)
@@ -115,17 +124,39 @@ class Actions extends Object {
   bool? transferringPlayback;
 }
 
+abstract class StartOrResumeOptions extends Object {
+  Map<String, dynamic> toJson();
+}
+
 @JsonSerializable(createFactory: false)
-class StartOrResumeOptions extends Object {
+class StartWithContextOptions extends StartOrResumeOptions {
+  StartWithContextOptions({this.contextUri, this.offset});
+
   /// Optional. Spotify URI of the context to play. Valid contexts are albums,
   /// artists & playlists.
   /// Example: "spotify:album:1Je1IMUlBXcx1Fz0WE7oPT"
   @JsonKey(name: 'context_uri')
   String? contextUri;
 
+  /// Optional. Indicates from where in the context playback should start.
+  /// Only available when [contextUri] corresponds to an album or playlist object
+  @JsonKey(toJson: _offsetToJson)
+  Offset? offset;
+
+  @override
+  Map<String, dynamic> toJson() => _$StartWithContextOptionsToJson(this);
+
+  static Map<String, dynamic>? _offsetToJson(Offset? offset) =>
+      offset?.toJson();
+}
+
+@JsonSerializable(createFactory: false)
+class StartWithUrisOptions extends StartOrResumeOptions {
+  StartWithUrisOptions({this.uris, this.positionMs});
+
   /// Optional. A JSON array of the Spotify track URIs to play.
   ///
-  /// Example: 
+  /// Example:
   /// ```json
   /// [
   ///     "spotify:track:4iV5W9uYEdYUVa79Axb7Rh",
@@ -134,23 +165,12 @@ class StartOrResumeOptions extends Object {
   /// ```
   List<String>? uris;
 
-  /// Optional. Indicates from where in the context playback should start.
-  /// Only available when context_uri corresponds to an album or playlist object
-  @JsonKey(toJson: _offsetToJson)
-  Offset? offset;
-
   /// Optional. The position in milliseconds to start playback.
-  @JsonKey(name: 'position_ms')
+  @JsonKey(name: 'position_ms', fromJson: convertToIntIfDoubleValue)
   int? positionMs;
 
-  StartOrResumeOptions(
-      {this.contextUri, this.uris, this.offset, this.positionMs});
-
-  Map<String, dynamic> toJson() => _$StartOrResumeOptionsToJson(this);
-
-  static Map<String, dynamic> _offsetToJson(Offset? offset) {
-    return offset?.toJson() ?? {};
-  }
+  @override
+  Map<String, dynamic> toJson() => _$StartWithUrisOptionsToJson(this);
 }
 
 abstract class Offset {
@@ -172,6 +192,7 @@ class UriOffset extends Offset {
 /// "position" is zero based and can’t be negative.
 @JsonSerializable(createFactory: false)
 class PositionOffset extends Offset {
+  @JsonKey(fromJson: convertToIntIfDoubleValueWithoutNull)
   final int position;
 
   PositionOffset(this.position) {

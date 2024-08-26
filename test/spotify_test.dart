@@ -3,11 +3,17 @@ import 'spotify_mock.dart';
 import 'package:test/test.dart';
 import 'package:spotify/spotify.dart';
 
+// ignore_for_file: deprecated_member_use_from_same_package
+
 Future main() async {
   var spotify = SpotifyApiMock(SpotifyApiCredentials(
     'clientId',
     'clientSecret',
   ));
+
+  tearDown(() {
+    spotify.interceptor = null;
+  });
 
   group('Albums', () {
     test('get', () async {
@@ -21,29 +27,28 @@ Future main() async {
     });
 
     test('album tracks', () async {
-      var album = await spotify.albums.get('4aawyAB9vmqN3uQ7FjRGTy');
-      var items = album.tracks;
-      expect(items!.length, 3);
+      var tracksPage = spotify.albums.tracks('4aawyAB9vmqN3uQ7FjRGTy');
+      var firstPage = await tracksPage.first();
 
-      var tracks = album.tracks;
-
-      var trackOne = tracks!.first;
+      var trackOne = firstPage.items!.first;
       expect(trackOne.discNumber, 1);
       expect(trackOne.durationMs, 85400);
       expect(trackOne.id, '6OmhkSOpvYBokMKQxpIGx2');
-      expect(trackOne.isPlayable, true);
+      expect(trackOne.isPlayable, isNull);
       expect(trackOne.type, 'track');
       expect(trackOne.uri, 'spotify:track:6OmhkSOpvYBokMKQxpIGx2');
       expect(trackOne.explicit, true);
       expect(trackOne.href,
           'https://api.spotify.com/v1/tracks/6OmhkSOpvYBokMKQxpIGx2');
       expect(trackOne.previewUrl,
-          'https://p.scdn.co/mp3-preview/bf9e33b1bb53c281c5eea0da6c317f2cd7c3eb58?cid=8897482848704f2a8f8d7c79726a70d4');
-      expect(trackOne.name, 'Global Warming');
+          'https://p.scdn.co/mp3-preview/81b57845f672fa5a0af749489e311ffb9fd552fe?cid=0b297fa8a249464ba34f5861d4140e58');
+      expect(trackOne.name, 'Global Warming (feat. Sensato)');
 
       expect(trackOne.externalUrls != null, true);
       expect(trackOne.externalUrls!.spotify,
           'https://open.spotify.com/track/6OmhkSOpvYBokMKQxpIGx2');
+      expect(trackOne.availableMarkets, isNotNull);
+      expect(trackOne.availableMarkets?.first, Market.AT);
 
       var artists = trackOne.artists;
       expect(artists!.length, 2);
@@ -125,6 +130,8 @@ Future main() async {
       expect(artist.type, 'artist');
       expect(artist.id, '0TnOYISbd1XYRBk9myaseg');
       expect(artist.images!.length, 3);
+      expect(artist.images![0].height, 640);
+      expect(artist.images![0].width, 640);
     });
 
     test('list', () async {
@@ -132,6 +139,16 @@ Future main() async {
           .list(['0TnOYISbd1XYRBk9myaseg', '0TnOYISbd1XYRBk9myaseg']);
 
       expect(artists.length, 2);
+    });
+
+    test('getRelatedArtists', () async {
+      var relatedArtists =
+          await spotify.artists.relatedArtists('0TnOYISbd1XYRBk9myaseg');
+      var first = relatedArtists.first;
+      expect(first.id, '0jnsk9HBra6NMjO2oANoPY');
+      expect(first.href,
+          'https://api.spotify.com/v1/artists/0jnsk9HBra6NMjO2oANoPY');
+      expect(first.name, 'Flo Rida');
     });
 
     test('getError', () async {
@@ -196,6 +213,16 @@ Future main() async {
       expect(result['2'], isFalse);
       expect(result['3'], isTrue);
     });
+
+    test('get playlist tracks', () async {
+      var tracks = await spotify.playlists
+          .getTracksByPlaylistId('1XIAxOGAEK2h4ravpNTmYF')
+          .all();
+
+      expect(tracks, hasLength(2));
+      expect(tracks.elementAt(0).id, 'track-1');
+      expect(tracks.elementAt(1).id, 'track-3');
+    });
   });
 
   group('Shows', () {
@@ -206,6 +233,8 @@ Future main() async {
       expect(show.id, '4AlxqGkkrqe0mfIx3Mi7Xt');
       expect(show.name, 'Universo Flutter');
       expect(show.totalEpisodes, 26);
+      expect(show.availableMarkets, isNotEmpty);
+      expect(show.availableMarkets?.first, Market.AD);
     });
 
     test('list', () async {
@@ -257,7 +286,7 @@ Future main() async {
 
     test('Devices', () async {
       var result = await spotify.player.devices();
-      expect(result.length, 1);
+      expect(result.length, 2);
       expect(result.first.id, '5fbb3ba6aa454b5534c4ba43a8c7e8e45a63ad0e');
       expect(result.first.isActive, true);
       expect(result.first.isRestricted, true);
@@ -265,6 +294,10 @@ Future main() async {
       expect(result.first.name, 'My fridge');
       expect(result.first.type, DeviceType.Computer);
       expect(result.first.volumePercent, 100);
+
+      // the second entry does not have a valid [DeviceType],
+      // and should have `Unknown` instead.
+      expect(result.last.type, DeviceType.Unknown);
     });
 
     test('recentlyPlayed', () async {
@@ -462,6 +495,34 @@ Future main() async {
       expect(result.repeatState, RepeatState.off);
       expect(result.actions?.resuming, false);
       expect(result.actions?.pausing, true);
+    });
+
+    test('startWithContext', () async {
+      spotify.interceptor = (method, url, headers, [body]) {
+        // checking sincce startWithContext makes a PUT and a GET request
+        // to retrieve the current playbackstate
+        if (method == 'PUT') {
+          expect(method, 'PUT');
+          expect(body, isNotNull);
+          expect(body,
+              '{"context_uri":"contextUri","offset":{"uri":"urioffset"}}');
+        }
+      };
+      await spotify.player
+          .startWithContext('contextUri', offset: UriOffset('urioffset'));
+    });
+
+    test('startWithUris', () async {
+      spotify.interceptor = (method, url, headers, [body]) {
+        // checking sincce startWithTracks makes a PUT and a GET request
+        // to retrieve the current playbackstate
+        if (method == 'PUT') {
+          expect(method, 'PUT');
+          expect(body, isNotNull);
+          expect(body, '{"uris":["track1"],"position_ms":10}');
+        }
+      };
+      await spotify.player.startWithTracks(['track1'], positionMs: 10);
     });
   });
 
