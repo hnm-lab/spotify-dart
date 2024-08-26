@@ -1,12 +1,14 @@
-part of spotify.models;
+part of '_models.dart';
 
 /// Json representation of the recommendations
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class Recommendations extends Object {
   Recommendations();
 
   factory Recommendations.fromJson(Map<String, dynamic> json) =>
       _$RecommendationsFromJson(json);
+
+  Map<String, dynamic> toJson() => _$RecommendationsToJson(this);
 
   /// A List of [RecommendationsSeed] objects.
   List<RecommendationsSeed>? seeds;
@@ -17,18 +19,22 @@ class Recommendations extends Object {
 }
 
 /// Json representation of the recommendation seed
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class RecommendationsSeed extends Object {
   RecommendationsSeed();
 
   factory RecommendationsSeed.fromJson(Map<String, dynamic> json) =>
       _$RecommendationsSeedFromJson(json);
 
+  Map<String, dynamic> toJson() => _$RecommendationsSeedToJson(this);
+
   /// The number of tracks available after min_* and max_* filters
   /// have been applied.
+  @JsonKey(fromJson: convertToIntIfDoubleValue)
   int? afterFilteringSize;
 
   /// The number of tracks available after relinking for regional availability.
+  @JsonKey(fromJson: convertToIntIfDoubleValue)
   int? afterRelinkingSize;
 
   /// A link to the full track or artist data for this seed.
@@ -43,6 +49,7 @@ class RecommendationsSeed extends Object {
   String? id;
 
   /// The number of recommended tracks available for this seed.
+  @JsonKey(fromJson: convertToIntIfDoubleValue)
   int? initialPoolSize;
 
   /// The entity type of this seed. One of artist, track or genre.

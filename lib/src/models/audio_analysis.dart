@@ -1,15 +1,17 @@
 // Copyright (c) 2021, grabajuice. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-part of spotify.models;
+part of '_models.dart';
 
 /// JSON representation of a track's analysis information
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class AudioAnalysis extends Object {
   AudioAnalysis();
 
   factory AudioAnalysis.fromJson(Map<String, dynamic> json) =>
       _$AudioAnalysisFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AudioAnalysisToJson(this);
 
   TrackAudioAnalysis? track;
 
@@ -49,6 +51,7 @@ abstract class _Section {
   /// The estimated overall key of the section. The values in this field
   /// ranging from `0 to `11` mapping to pitches using standard Pitch Class notation
   /// (E.g. `0 = C`, `1 = C♯/D♭`, `2 = D`, and so on). If no key was detected, the value is `-1`.
+  @JsonKey(fromJson: convertToIntIfDoubleValue)
   int? key;
 
   /// The confidence, from 0.0 to 1.0, of the reliability of the key.
@@ -62,6 +65,7 @@ abstract class _Section {
   /// Note that the major key (e.g. C major) could more likely be confused
   /// with the minor key at `3` semitones lower (e.g. A minor) as both
   /// keys carry the same pitches.
+  @JsonKey(fromJson: convertToIntIfDoubleValue)
   int? mode;
 
   /// The confidence, from `0.0` to `1.0`, of the reliability of the mode.
@@ -73,7 +77,7 @@ abstract class _Section {
   /// how many beats are in each bar (or measure).
   /// The time signature ranges from `3` to `7` indicating time signatures
   /// of “3/4”, to “7/4”.
-  @JsonKey(name: 'time_signature')
+  @JsonKey(name: 'time_signature', fromJson: convertToIntIfDoubleValue)
   int? timeSignature;
 
   /// The confidence, from `0.0` to `1.0`, of the reliability of the
@@ -84,25 +88,27 @@ abstract class _Section {
 }
 
 /// JSON representation of the track analysis summary
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class TrackAudioAnalysis extends _Section {
   TrackAudioAnalysis();
 
   factory TrackAudioAnalysis.fromJson(Map<String, dynamic> json) =>
       _$TrackAudioAnalysisFromJson(json);
 
+  Map<String, dynamic> toJson() => _$TrackAudioAnalysisToJson(this);
+
   /// The exact number of audio samples analyzed from this track.
   /// See also [analysisSampleRate].
-  @JsonKey(name: 'num_samples')
+  @JsonKey(name: 'num_samples', fromJson: convertToIntIfDoubleValue)
   int? numSamples;
 
   /// The sample rate used to decode and analyze this track.
   ///
   /// May differ from the actual sample rate of this track available on Spotify.
-  @JsonKey(name: 'analysis_sample_rate')
+  @JsonKey(name: 'analysis_sample_rate', fromJson: convertToIntIfDoubleValue)
   int? analysisSampleRate;
 
-  @JsonKey(name: 'analysis_channels')
+  @JsonKey(name: 'analysis_channels', fromJson: convertToIntIfDoubleValue)
   int? analysisChannels;
 
   /// The time, in seconds, at which the track's fade-in period ends.
@@ -141,24 +147,26 @@ class TrackAudioAnalysis extends _Section {
 }
 
 /// JSON representation of track section in the analysis
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class Section extends _Section {
   Section();
 
   factory Section.fromJson(Map<String, dynamic> json) =>
       _$SectionFromJson(json);
+  Map<String, dynamic> toJson() => _$SectionToJson(this);
 
   /// The starting point (in seconds) of the section.
   double? start;
 }
 
 /// JSON representation of track segment in the analysis
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class Segment extends Object {
   Segment();
 
   factory Segment.fromJson(Map<String, dynamic> json) =>
       _$SegmentFromJson(json);
+  Map<String, dynamic> toJson() => _$SegmentToJson(this);
 
   /// The starting point (in seconds) of the segment.
   double? start;
@@ -213,12 +221,13 @@ class Segment extends Object {
 
 /// JSON representation of a time interval inside [AudioAnalysis.bars],
 /// [AudioAnalysis.beats] and [AudioAnalysis.tatums],
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class TimeInterval extends Object {
   TimeInterval();
 
   factory TimeInterval.fromJson(Map<String, dynamic> json) =>
       _$TimeIntervalFromJson(json);
+  Map<String, dynamic> toJson() => _$TimeIntervalToJson(this);
 
   /// The confidence, from `0.0` to `1.0`, of the reliability of the interval.
   double? confidence;

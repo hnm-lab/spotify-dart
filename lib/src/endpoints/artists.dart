@@ -1,14 +1,14 @@
 // Copyright (c) 2017, rinukkusu. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-part of spotify;
+part of '../../spotify.dart';
 
 /// Endpoint for artists `v1/artists`
 class Artists extends EndpointPaging {
   @override
   String get _path => 'v1/artists';
 
-  Artists(SpotifyApiBase api) : super(api);
+  Artists(super.api);
 
   /// Retrieves an artist with its [artistId]
   Future<Artist> get(String artistId) async {
@@ -18,11 +18,21 @@ class Artists extends EndpointPaging {
     return Artist.fromJson(map);
   }
 
-  /// Returns the top tracks of an artist with its [artistId] inside a [countryCode]
-  Future<Iterable<Track>> getTopTracks(
-      String artistId, String countryCode) async {
-    var jsonString =
-        await _api._get('$_path/$artistId/top-tracks?country=$countryCode');
+  /// Returns the top tracks of an artist with its [artistId] inside a [country]
+  @Deprecated('Use [topTracks] instead')
+  Future<Iterable<Track>> getTopTracks(String artistId, String country) {
+    var contains = Market.values.asNameMap().containsKey(country);
+    assert(contains == true,
+        'The country code $country does not match with any Market enum value');
+    return topTracks(artistId, Market.values.asNameMap()[country]!);
+  }
+
+  /// Returns the top tracks of an artist with its [artistId] inside a [country]
+  Future<Iterable<Track>> topTracks(String artistId, Market country) async {
+    var query = _buildQuery({
+      'country': country.name,
+    });
+    var jsonString = await _api._get('$_path/$artistId/top-tracks?$query');
     var map = json.decode(jsonString);
 
     var topTracks = map['tracks'] as Iterable<dynamic>;
@@ -35,22 +45,17 @@ class Artists extends EndpointPaging {
       relatedArtists(artistId);
 
   /// Retrieves multiple artists with [artistIds]
-  Future<Iterable<Artist>> list(Iterable<String> artistIds) async {
-    var jsonString = await _api._get('$_path?ids=${artistIds.join(',')}');
-    var map = json.decode(jsonString);
-
-    var artistsMap = map['artists'] as Iterable<dynamic>;
-    return artistsMap.map((m) => Artist.fromJson(m));
-  }
+  Future<Iterable<Artist>> list(List<String> artistIds) async => _listWithIds(
+      path: _path,
+      ids: artistIds,
+      jsonKey: 'artists',
+      fromJson: Artist.fromJson);
 
   /// Returns related artists based on the artist with its [artistId]
-  Future<Iterable<Artist>> relatedArtists(String artistId) async {
-    var jsonString = await _api._get('$_path/$artistId/related-artists');
-    var map = json.decode(jsonString);
-
-    var artistsMap = map['artists'] as Iterable<dynamic>;
-    return artistsMap.map((m) => Artist.fromJson(m));
-  }
+  Future<Iterable<Artist>> relatedArtists(String artistId) async => _list(
+      path: '$_path/$artistId/related-artists',
+      jsonKey: 'artists',
+      fromJson: Artist.fromJson);
 
   /// [includeGroups] - A comma-separated list of keywords that will be used to
   /// filter the response. If not supplied, all album types will be returned.
@@ -67,9 +72,9 @@ class Artists extends EndpointPaging {
     Market? country,
     List<String>? includeGroups,
   }) {
-    final _includeGroups = includeGroups?.join(',');
+    final includeGroups0 = includeGroups?.join(',');
     final query = _buildQuery({
-      'include_groups': _includeGroups,
+      'include_groups': includeGroups0,
       'country': country?.name,
     });
     return _getPages(

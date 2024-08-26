@@ -1,14 +1,14 @@
 // Copyright (c) 2017, chances. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-part of spotify;
+part of '../../spotify.dart';
 
 /// Endpoint of playlists
 class Playlists extends EndpointPaging {
   @override
   String get _path => 'v1/browse';
 
-  Playlists(SpotifyApiBase api) : super(api);
+  Playlists(super.api);
 
   Future<Playlist> get(String playlistId) async {
     return Playlist.fromJson(
@@ -35,10 +35,17 @@ class Playlists extends EndpointPaging {
         'v1/users/$userId/playlists', (json) => PlaylistSimple.fromJson(json));
   }
 
-  /// [playlistId] - the Spotify playlist ID
+  /// Returns `track`s from a given spotify [playlistId]
   Pages<Track> getTracksByPlaylistId(playlistId) {
-    return _getPages('v1/playlists/$playlistId/tracks',
-        (json) => Track.fromJson(json['track']));
+    // restricting the return items to `track`
+    final query = _buildQuery({'additional_types': 'track'});
+    return _getPages(
+      'v1/playlists/$playlistId/tracks?$query',
+      (json) => Track.fromJson(json['track']),
+      null,
+      null,
+      (json) => json['track'] != null,
+    );
   }
 
   /// [userId] - the Spotify user ID
@@ -257,8 +264,8 @@ class Playlists extends EndpointPaging {
   ///
   /// [categoryId] - the Spotify category ID for the category.
   Pages<PlaylistSimple> getByCategoryId(String categoryId,
-      {String? country, String? locale}) {
-    final query = _buildQuery({'country': country, 'locale': locale});
+      {Market? country, String? locale}) {
+    final query = _buildQuery({'country': country?.name, 'locale': locale});
 
     return _getPages(
         '$_path/categories/$categoryId/playlists?$query',
